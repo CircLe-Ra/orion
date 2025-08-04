@@ -1,0 +1,239 @@
+import AppLayout from '@/layouts/app-layout';
+import { BreadcrumbItem, Service, SharedData } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import Heading from '@/components/heading';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { MouseEvent, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import {
+    DropdownMenu,
+    DropdownMenuContent, DropdownMenuItem,
+    DropdownMenuLabel, DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { ChevronRight, Loader2Icon, Settings, Trash2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard'
+    },{
+        title: 'Master Data',
+    },
+    {
+        title: 'Layanan Studio',
+        href: 'master-data/services'
+    }
+];
+
+type ServiceForm = {
+    name: string;
+}
+
+type Props = {
+    services: Service[];
+}
+
+const ServicePage = ({ services }: Props) => {
+    const { flash } = usePage<SharedData>().props;
+    const [selectedItem, setSelectedItem] = useState<string | null>(null);
+    const [open, setOpen] = useState<{ id: string | null; status: boolean }>({
+        id: null,
+        status: false,
+    });
+
+    useEffect(() => {
+        if (flash.status === 'success') {
+            toast.success(flash.message);
+        }
+        if(flash.status === 'error') {
+            toast.error(flash.message);
+        }
+    }, [flash.status, flash.message]);
+
+
+    const { data, setData, post, put, delete: destroy, processing, errors } = useForm<Required<ServiceForm>>({
+        name: ''
+    });
+
+    const submit = (e: MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        if (selectedItem){
+            put('/master-data/services/' + selectedItem, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setData('name', '');
+                    setSelectedItem(null);
+                }
+            });
+        }else{
+            post('/master-data/services', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setData('name', '');
+                }
+            });
+        }
+    }
+
+    const handleUpdate = (id: string) => {
+        const service = services.find((item) => item.id === id);
+        if(!services) return;
+        setSelectedItem(id);
+        setData('name', service!.name);
+    }
+
+    const handleDelete = (id: string) => {
+        destroy(`/master-data/services/${id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpen({
+                    id:null,
+                    status: false
+                });
+            }
+        });
+    }
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title={'Layanan Studio'} />
+            <div className="px-4 py-6">
+                <Heading title="Layanan" description="Tambahkan daftar layanan yang akan kamu buka" />
+                <div className={'flex flex-col items-center justify-between gap-4 lg:flex-row'}>
+                    <Card className={'w-full self-start lg:w-3/8'}>
+                        <CardHeader>
+                            <CardTitle>Input Data Layanan</CardTitle>
+                            <CardDescription>Isikan nama layanan pada kolom lalu simpan</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className={'grid gap-2'}>
+                                <Label htmlFor="name">Nama Layanan</Label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    required
+                                    tabIndex={1}
+                                    autoComplete="name"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                />
+                                <InputError message={errors.name} />
+                            </div>
+                        </CardContent>
+                        <CardFooter className={'flex justify-end gap-2'}>
+                            <Button
+                                variant={'secondary'}
+                                onClick={() => {
+                                    setSelectedItem(null);
+                                    setData('name', '');
+                                }}>
+                            Batal
+                            </Button>
+                            <Button onClick={submit} disabled={processing}>
+                                {processing && (<Loader2Icon className="animate-spin" />)}
+                                {selectedItem ? 'Perbarui' : 'Simpan'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                    <Card className={'w-full self-start lg:w-3/4'}>
+                        <CardHeader>
+                            <CardTitle>Data Layanan</CardTitle>
+                            <CardDescription>Data layanan yang telah diinputkan</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]">No.</TableHead>
+                                        <TableHead>Nama Layanan</TableHead>
+                                        <TableHead>Aksi</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {services.length > 0
+                                        ? services.map((service, index) => (
+                                              <TableRow key={service.id}>
+                                                  <TableCell>{index + 1}</TableCell>
+                                                  <TableCell>{service.name}</TableCell>
+                                                  <TableCell>
+                                                      <DropdownMenu>
+                                                          <DropdownMenuTrigger asChild>
+                                                              <Button variant={'outline'} size={'sm'} className={'cursor-pointer'}>
+                                                                  Buka
+                                                                  <ChevronRight />
+                                                              </Button>
+                                                          </DropdownMenuTrigger>
+                                                          <DropdownMenuContent side={'right'}>
+                                                              <DropdownMenuLabel>{service.name}</DropdownMenuLabel>
+                                                              <DropdownMenuSeparator />
+                                                              <DropdownMenuItem className={'cursor-pointer'} onClick={() => handleUpdate(service.id)}>
+                                                                  <Settings className={'-mt-0.5 hover:text-white'} />
+                                                                  Perbarui
+                                                              </DropdownMenuItem>
+                                                              <DropdownMenuItem onClick={() => setOpen(prev => ({
+                                                                  ...prev,
+                                                                  id: service.id,
+                                                                  status: true
+                                                              }))} className={'cursor-pointer'}>
+                                                                  <Trash2 className={'-mt-0.5 hover:text-white'} />
+                                                                  Hapus
+                                                              </DropdownMenuItem>
+                                                          </DropdownMenuContent>
+                                                      </DropdownMenu>
+                                                  </TableCell>
+                                              </TableRow>
+                                          ))
+                                        : (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className={'text-center'}>Tidak ada data</TableCell>
+                                            </TableRow>
+                                        )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+            <AlertDialog open={open.status}
+                         onOpenChange={(isOpen) =>
+                             setOpen(prev => ({
+                            ...prev,
+                            status:isOpen
+                        }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Kamu yakin akan menghapus data ini?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tindakan ini tidak dapat dibatalkan. Tindakan ini akan menghapus akun Anda secara permanen
+                            dan menghapus data Anda dari server.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setOpen(()  => ({
+                            id:null,
+                            status: false
+                        }))}>Batal</AlertDialogCancel>
+                        <AlertDialogAction className={'bg-red-500 hover:bg-red-500 cursor-pointer'} onClick={() => handleDelete(open.id!)}>Hapus</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </AppLayout>
+    );
+}
+
+export default ServicePage;
