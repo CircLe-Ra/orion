@@ -128,6 +128,7 @@ const PackagePage = ({ services, packages } : Props) => {
         setData('name', pkg!.name);
         setData('price', pkg!.price);
         setData('description', pkg!.description);
+        setDisplayPrice(currency(pkg!.price.toString()));
         setOpen((prev) => (
             {
                 ...prev,
@@ -284,7 +285,9 @@ const PackagePage = ({ services, packages } : Props) => {
                                     id="desc"
                                     name={'description'}
                                     onChange={(e) => setData('description', e.target.value)}
-                                />
+                                >
+                                    {data.description}
+                                </Textarea>
                             </div>
                         </div>
                         <DialogFooter>

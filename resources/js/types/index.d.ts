@@ -75,6 +75,6 @@ export interface Package {
     name: string;
     price: number;
     description: string;
-    service_id: number;
+    service_id: string;
     service?: Service;
 }
