@@ -15,9 +15,9 @@ export function currency (value: string): string {
     }).format(number);
 }
 
-export function limitString (value: string, limit: number): string {
+export function limitString (value: string, limit: number, elipsis: string = "..."): string {
     if (value.length > limit) {
-        return value.substring(0, limit) + '...';
+        return value.substring(0, limit) + elipsis;
     }
     return value;
 }

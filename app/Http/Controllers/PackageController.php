@@ -16,7 +16,7 @@ class PackageController extends Controller
     {
         return Inertia::render('master-data/package/index', [
             'services' => Service::all(),
-            'packages' => Package::all()
+            'packages' => Package::with('service')->get()
         ]);
     }
 
@@ -33,7 +33,25 @@ class PackageController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'name' => 'required|string',
+            'price' => 'required|numeric',
+            'description' => 'required|string',
+        ]);
+        try {
+            Package::create($validated);
+            return to_route('package.index')->with([
+                'status' => 'success',
+                'message' => 'Paket baru berhasil ditambahkan.'
+            ]);
+        }catch (\Exception $exception){
+            return to_route('package.index')->with([
+                'status' => 'error',
+                'message' => 'Error : '.$exception->getMessage()
+            ]);
+        }
+
     }
 
     /**

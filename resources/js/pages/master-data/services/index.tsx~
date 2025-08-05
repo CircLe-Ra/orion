@@ -179,7 +179,7 @@ const ServicePage = ({ services }: Props) => {
                                                               </Button>
                                                           </DropdownMenuTrigger>
                                                           <DropdownMenuContent side={'right'}>
-                                                              <DropdownMenuLabel className={'text-center'}><strong>{service.name}</strong></DropdownMenuLabel>
+                                                              <DropdownMenuLabel className={'text-center'}><strong>service.name}</strong></DropdownMenuLabel>
                                                               <DropdownMenuSeparator />
                                                               <DropdownMenuItem className={'cursor-pointer'} onClick={() => handleUpdate(service.id)}>
                                                                   <Settings className={'-mt-0.5 hover:text-white'} />
