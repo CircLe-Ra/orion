@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, Package, Service, SharedData } from '@/types';
+import { BreadcrumbItem, Package, PaginatedResponse, Service, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableCell, TableRow } from '@/components/ui/table';
 
 import {
     Dialog, DialogClose,
@@ -17,7 +17,7 @@ import {
     DialogTitle
 } from '@/components/ui/dialog';
 import { FormEvent, useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, Loader2Icon, PlusCircle, Settings, Trash2 } from 'lucide-react';
+import { ChevronDown, Loader2Icon, PlusCircle, Settings, Trash2 } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { currency, limitString } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +37,17 @@ import {
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import TableData from '@/components/table-data';
 
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -61,11 +72,12 @@ type PackageForm = {
 
 type Dialog = {
     id: string | null,
-    status: boolean
+    status: boolean,
+    dialogType: string
 }
 
 type Props = {
-    packages: Package[];
+    packages: PaginatedResponse<Package>;
     services: Service[];
 }
 
@@ -74,6 +86,7 @@ const PackagePage = ({ services, packages } : Props) => {
     const [open, setOpen] = useState<Dialog>({
         id: null,
         status: false,
+        dialogType: ''
     });
     const [displayPrice, setDisplayPrice] = useState('');
 
@@ -102,7 +115,8 @@ const PackagePage = ({ services, packages } : Props) => {
                     reset('service_id', 'name', 'price', 'description');
                     setOpen(() => ({
                         id: null,
-                        status: false
+                        status: false,
+                        dialogType: ''
                     }));
                 },
             });
@@ -113,7 +127,8 @@ const PackagePage = ({ services, packages } : Props) => {
                     reset('service_id', 'name', 'price', 'description');
                     setOpen(() => ({
                         id: null,
-                        status: false
+                        status: false,
+                        dialogType: ''
                     }));
                 },
             });
@@ -121,8 +136,7 @@ const PackagePage = ({ services, packages } : Props) => {
     }
 
     const handleUpdate = (id: string) => {
-        const pkg = packages.find((item) => item.id === id);
-        console.log(pkg)
+        const pkg = packages.data.find((item) => item.id === id);
         if(!pkg) return;
         setData('service_id', pkg!.service_id.toString());
         setData('name', pkg!.name);
@@ -133,9 +147,23 @@ const PackagePage = ({ services, packages } : Props) => {
             {
                 ...prev,
                 id: id,
-                status: true
+                status: true,
+                dialogType: 'dialog'
             }
         ))
+    }
+
+    const handleDelete = (id: string) => {
+        destroy(`/master-data/package/${id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setOpen({
+                    id: null,
+                    status: false,
+                    dialogType: ''
+                });
+            }
+        });
     }
 
 
@@ -153,12 +181,7 @@ const PackagePage = ({ services, packages } : Props) => {
                                     <CardDescription>Data paket yang telah diinputkan</CardDescription>
                                 </div>
                                 <div>
-                                    <Button onClick={() => setOpen(prev => ({
-                                            ...prev,
-                                            id: null,
-                                            status: true
-                                        })
-                                    )}>
+                                    <Button onClick={() => setOpen(prev => ({ ...prev, id: null, status: true, dialogType: 'dialog' }))}>
                                         <PlusCircle />
                                         Tambah Paket
                                     </Button>
@@ -166,72 +189,61 @@ const PackagePage = ({ services, packages } : Props) => {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]">No.</TableHead>
-                                        <TableHead>Nama Layanan</TableHead>
-                                        <TableHead>Nama Paket</TableHead>
-                                        <TableHead>Harga Paket</TableHead>
-                                        <TableHead>Deskripsi Paket</TableHead>
-                                        <TableHead>Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {packages.length > 0 ? (
-                                        packages.map((item, index) => (
-                                            <TableRow key={item.id}>
-                                                <TableCell>{index + 1}</TableCell>
-                                                <TableCell>{item.service?.name}</TableCell>
-                                                <TableCell>{item.name}</TableCell>
-                                                <TableCell>{currency(item.price.toString())}</TableCell>
-                                                <TableCell>{limitString(item.description, 30)}</TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant={'outline'} size={'sm'} className={'cursor-pointer'}>
-                                                                Buka
-                                                                <ChevronDown />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent side={'bottom'}>
-                                                            <DropdownMenuLabel className={'text-center'}><strong>{item.name}</strong></DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className={'cursor-pointer'} onClick={() => handleUpdate(item.id)}>
-                                                                <Settings className={'-mt-0.5 hover:text-white'} />
-                                                                Perbarui
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => setOpen(prev => ({
-                                                                ...prev,
-                                                                id: item.id,
-                                                                status: true
-                                                            }))} className={'cursor-pointer'}>
-                                                                <Trash2 className={'-mt-0.5 hover:text-white'} />
-                                                                Hapus
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={6} className={'text-center'}>Tidak ada data</TableCell>
+                            <TableData links={packages.links} tHead={['Nama Layanan', 'Nama Paket', 'Harga', 'Deskripsi', 'Aksi']}>
+                                {packages.data.length > 0 ? (
+                                    packages.data.map((item, index) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{item.service?.name}</TableCell>
+                                            <TableCell>{item.name}</TableCell>
+                                            <TableCell>{currency(item.price.toString())}</TableCell>
+                                            <TableCell>{limitString(item.description, 30)}</TableCell>
+                                            <TableCell>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant={'outline'} size={'sm'} className={'cursor-pointer'}>
+                                                            Menu
+                                                            <ChevronDown />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent side={'bottom'}>
+                                                        <DropdownMenuLabel className={'text-center'}><strong>{item.name}</strong></DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem className={'cursor-pointer'} onClick={() => handleUpdate(item.id)}>
+                                                            <Settings className={'-mt-0.5 hover:text-white'} />
+                                                            Perbarui
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => setOpen(prev => ({
+                                                            ...prev,
+                                                            id: item.id,
+                                                            status: true,
+                                                            dialogType: 'alert'
+                                                        }))} className={'cursor-pointer'}>
+                                                            <Trash2 className={'-mt-0.5 hover:text-white'} />
+                                                            Hapus
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
                                         </TableRow>
-                                    ) }
-                                </TableBody>
-                            </Table>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className={'text-center'}>Tidak ada data</TableCell>
+                                    </TableRow>
+                                ) }
+                            </TableData>
                         </CardContent>
                     </Card>
                 </div>
             </div>
-            <Dialog open={open.status} onOpenChange={(isOpen) => (
+            <Dialog open={open.dialogType === 'dialog' && open.status} onOpenChange={(isOpen) => (
                 setOpen(prev => ({
                     ...prev,
                     status: isOpen
                 }))
             )}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px]" showCloseButton={false}>
                     <DialogHeader>
                         <DialogTitle>{open.id ? 'Perbarui Data' : 'Tambah Data'}</DialogTitle>
                         <DialogDescription>
@@ -292,24 +304,49 @@ const PackagePage = ({ services, packages } : Props) => {
                         </div>
                         <DialogFooter>
                             <DialogClose asChild>
-                                <Button variant="outline" onClick={() => {
+                                <Button className={'w-20 cursor-pointer'} variant="outline" onClick={() => {
                                     setOpen(() => ({
                                             id: null,
-                                            status: false
+                                            status: false,
+                                            dialogType: ''
                                         })
                                     );
                                     reset('service_id', 'name', 'price', 'description');
                                     setDisplayPrice('');
-                                }} className={'cursor-pointer'}>Tutup</Button>
+                                }}>Tutup</Button>
                             </DialogClose>
-                            <Button type="submit" disabled={processing} className={'cursor-pointer'}>
+                            <Button type="submit" disabled={processing} className={'cursor-pointer w-20'}>
                                 {processing && <Loader2Icon className={'animate-spin'} />}
-                                Simpan
+                                {processing ? '' : open.id ? 'Perbarui' : 'Simpan'}
                             </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={open.dialogType === 'alert' && open.status}
+                         onOpenChange={(isOpen) =>
+                             setOpen(prev => ({
+                                 ...prev,
+                                 status:isOpen
+                             }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Kamu yakin akan menghapus data ini?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tindakan ini tidak dapat dibatalkan. Tindakan ini akan menghapus data Anda secara permanen
+                            dan menghapus data Anda dari server.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setOpen(()  => ({
+                            id:null,
+                            status: false,
+                            dialogType: ''
+                        }))}>Batal</AlertDialogCancel>
+                        <AlertDialogAction className={'bg-red-500 hover:bg-red-500 cursor-pointer'} onClick={() => handleDelete(open.id!)}>Hapus</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }

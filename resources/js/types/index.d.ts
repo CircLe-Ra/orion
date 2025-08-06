@@ -51,7 +51,10 @@ export interface SharedData {
     flash: {
         status: string,
         message: string
-    }
+    },
+    search?: string,
+    show?: number,
+    page?: number
 }
 
 export interface User {
@@ -77,4 +80,22 @@ export interface Package {
     description: string;
     service_id: string;
     service?: Service;
+}
+
+
+export interface PaginationLinks {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface PaginatedResponse<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+    total: number;
+    per_page: number;
+    links: PaginationLinks[];
 }

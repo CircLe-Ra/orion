@@ -11,10 +11,23 @@ class ServiceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->search ?? '';
+        $show = $request->show ?? 5;
+        $page = $request->page ?? 1;
+
+        if($search){
+            $services = Service::where('name', 'like', '%' . $search . '%')->paginate($show)->withQueryString();
+        }else{
+            $services = Service::paginate($show)->withQueryString();
+        }
+
         return Inertia::render('master-data/services/index',[
-            'services' => Service::all()
+            'services' => $services,
+            'search' => $search,
+            'show' => $show,
+            'page' => (int)$page
         ]);
     }
 

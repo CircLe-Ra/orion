@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, Service, SharedData } from '@/types';
+import { BreadcrumbItem, PaginatedResponse, Service, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle
 } from '@/components/ui/alert-dialog';
+import TableData from '@/components/table-data';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -45,7 +46,7 @@ type ServiceForm = {
 }
 
 type Props = {
-    services: Service[];
+    services: PaginatedResponse<Service>;
 }
 
 const ServicePage = ({ services }: Props) => {
@@ -91,8 +92,8 @@ const ServicePage = ({ services }: Props) => {
     }
 
     const handleUpdate = (id: string) => {
-        const service = services.find((item) => item.id === id);
-        if(!services) return;
+        const service = services.data.find((item) => item.id === id);
+        if(!service) return;
         setSelectedItem(id);
         setData('name', service!.name);
     }
@@ -137,6 +138,7 @@ const ServicePage = ({ services }: Props) => {
                         </CardContent>
                         <CardFooter className={'flex justify-end gap-2'}>
                             <Button
+                                className={'cursor-pointer w-20'}
                                 variant={'secondary'}
                                 onClick={() => {
                                     setSelectedItem(null);
@@ -144,9 +146,9 @@ const ServicePage = ({ services }: Props) => {
                                 }}>
                             Batal
                             </Button>
-                            <Button onClick={submit} disabled={processing}>
+                            <Button onClick={submit} disabled={processing} className={'cursor-pointer w-20'}>
                                 {processing && (<Loader2Icon className="animate-spin" />)}
-                                {selectedItem ? 'Perbarui' : 'Simpan'}
+                                {processing ? '' : selectedItem ? 'Perbarui' : 'Simpan'}
                             </Button>
                         </CardFooter>
                     </Card>
@@ -156,55 +158,46 @@ const ServicePage = ({ services }: Props) => {
                             <CardDescription>Data layanan yang telah diinputkan</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]">No.</TableHead>
-                                        <TableHead>Nama Layanan</TableHead>
-                                        <TableHead>Aksi</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {services.length > 0
-                                        ? services.map((service, index) => (
-                                              <TableRow key={service.id}>
-                                                  <TableCell>{index + 1}</TableCell>
-                                                  <TableCell>{service.name}</TableCell>
-                                                  <TableCell>
-                                                      <DropdownMenu>
-                                                          <DropdownMenuTrigger asChild>
-                                                              <Button variant={'outline'} size={'sm'} className={'cursor-pointer'}>
-                                                                  Buka
-                                                                  <ChevronRight />
-                                                              </Button>
-                                                          </DropdownMenuTrigger>
-                                                          <DropdownMenuContent side={'right'}>
-                                                              <DropdownMenuLabel className={'text-center'}><strong>{service.name}</strong></DropdownMenuLabel>
-                                                              <DropdownMenuSeparator />
-                                                              <DropdownMenuItem className={'cursor-pointer'} onClick={() => handleUpdate(service.id)}>
-                                                                  <Settings className={'-mt-0.5 hover:text-white'} />
-                                                                  Perbarui
-                                                              </DropdownMenuItem>
-                                                              <DropdownMenuItem onClick={() => setOpen(prev => ({
-                                                                  ...prev,
-                                                                  id: service.id,
-                                                                  status: true
-                                                              }))} className={'cursor-pointer'}>
-                                                                  <Trash2 className={'-mt-0.5 hover:text-white'} />
-                                                                  Hapus
-                                                              </DropdownMenuItem>
-                                                          </DropdownMenuContent>
-                                                      </DropdownMenu>
-                                                  </TableCell>
-                                              </TableRow>
-                                          ))
-                                        : (
-                                            <TableRow>
-                                                <TableCell colSpan={4} className={'text-center'}>Tidak ada data</TableCell>
-                                            </TableRow>
-                                        )}
-                                </TableBody>
-                            </Table>
+                            <TableData links={services.links} tHead={['Nama Layanan', 'Aksi']}>
+                                {services.data.length > 0
+                                    ? services.data.map((service, index) => (
+                                        <TableRow key={service.id}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>{service.name}</TableCell>
+                                            <TableCell>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant={'outline'} size={'sm'} className={'cursor-pointer'}>
+                                                            Menu
+                                                            <ChevronRight />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent side={'right'}>
+                                                        <DropdownMenuLabel className={'text-center'}><strong>{service.name}</strong></DropdownMenuLabel>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem className={'cursor-pointer'} onClick={() => handleUpdate(service.id)}>
+                                                            <Settings className={'-mt-0.5 hover:text-white'} />
+                                                            Perbarui
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => setOpen(prev => ({
+                                                            ...prev,
+                                                            id: service.id,
+                                                            status: true
+                                                        }))} className={'cursor-pointer'}>
+                                                            <Trash2 className={'-mt-0.5 hover:text-white'} />
+                                                            Hapus
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                    : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className={'text-center'}>Tidak ada data</TableCell>
+                                        </TableRow>
+                                    )}
+                            </TableData>
                         </CardContent>
                     </Card>
                 </div>
@@ -219,7 +212,7 @@ const ServicePage = ({ services }: Props) => {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Kamu yakin akan menghapus data ini?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tindakan ini tidak dapat dibatalkan. Tindakan ini akan menghapus akun Anda secara permanen
+                            Tindakan ini tidak dapat dibatalkan. Tindakan ini akan menghapus data Anda secara permanen
                             dan menghapus data Anda dari server.
                         </AlertDialogDescription>
                     </AlertDialogHeader>

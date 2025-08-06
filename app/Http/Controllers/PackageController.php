@@ -12,11 +12,26 @@ class PackageController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $show = $request->show ?? 5;
+        $search = $request->search ?? '';
+        $page = $request->page ?? 1;
+
+        if ($search) {
+            $packages = Package::with('service')->whereHas('service', function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })->orWhereAny(['name', 'price', 'description'], 'like', '%' . $search . '%')
+                ->paginate($show)->withQueryString();
+        } else {
+            $packages = Package::with('service')->paginate($show)->withQueryString();
+        }
         return Inertia::render('master-data/package/index', [
             'services' => Service::all(),
-            'packages' => Package::with('service')->get()
+            'packages' => $packages,
+            'search' => $search,
+            'show' => $show,
+            'page' => (int)$page
         ]);
     }
 
@@ -75,7 +90,24 @@ class PackageController extends Controller
      */
     public function update(Request $request, Package $package)
     {
-        //
+        $validated = $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'name' => 'required|string',
+            'price' => 'required|numeric',
+            'description' => 'required|string',
+        ]);
+        try {
+            $package->update($validated);
+            return to_route('package.index')->with([
+                'status' => 'success',
+                'message' => 'Paket berhasil diperbaharui.'
+            ]);
+        }catch (\Exception $exception){
+            return to_route('package.index')->with([
+                'status' => 'error',
+                'message' => 'Error : '.$exception->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -83,6 +115,17 @@ class PackageController extends Controller
      */
     public function destroy(Package $package)
     {
-        //
+        try {
+            $package->delete();
+            return to_route('package.index')->with([
+                'status' => 'success',
+                'message' => 'Paket berhasil dihapus.'
+            ]);
+        }catch (\Exception $exception){
+            return to_route('package.index')->with([
+                'status' => 'error',
+                'message' => 'Error : '.$exception->getMessage()
+            ]);
+        }
     }
 }
