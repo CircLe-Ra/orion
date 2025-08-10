@@ -18,8 +18,14 @@ export default function TableData({ children, links, tHead, showPerPage = 5 }: P
     const { search, show, page } = usePage<SharedData>().props;
     const [query, setQuery] = useState<string>(search || '');
     const [perPage, setPerPage] = useState<number>(show || showPerPage);
+    const [firstLoad, setFirstLoad] = useState(true);
 
     useEffect(() => {
+        if (firstLoad) {
+            setFirstLoad(false);
+            return;
+        }
+
         const timeout = setTimeout(() => {
             router.get(window.location.pathname, { search: query, show: perPage, page },{
                 replace: true,

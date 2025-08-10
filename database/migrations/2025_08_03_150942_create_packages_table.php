@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name', 100);
             $table->integer('price');
             $table->text('description');
+            $table->text('terms_conditions');
             $table->timestamps();
         });
     }

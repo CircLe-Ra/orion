@@ -33,13 +33,6 @@ export type NavItem = | {
     isActive?: boolean;
     subMenu: SubMenu[];
 }
-// export interface NavItem {
-//     title: string;
-//     href: string | null;
-//     icon?: LucideIcon | null;
-//     isActive?: boolean;
-//     subItem?:SubMenu[] | null;
-// }
 
 export interface SharedData {
     name: string;
@@ -57,6 +50,12 @@ export interface SharedData {
     page?: number
 }
 
+export type DialogProps = {
+    id: string | null,
+    status: boolean,
+    dialogType: string
+}
+
 export interface User {
     id: string;
     name: string;
@@ -67,21 +66,6 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
-
-export interface Service {
-    id: string;
-    name: string;
-}
-
-export interface Package {
-    id: string;
-    name: string;
-    price: number;
-    description: string;
-    service_id: string;
-    service?: Service;
-}
-
 
 export interface PaginationLinks {
     url: string | null;
@@ -99,3 +83,20 @@ export interface PaginatedResponse<T> {
     per_page: number;
     links: PaginationLinks[];
 }
+
+
+export interface NamedEntity {
+    id: string;
+    name: string;
+}
+
+export type Service = NamedEntity;
+
+export interface Package extends NamedEntity {
+    price: number;
+    description: string;
+    service_id: string;
+    service?: Service;
+}
+
+

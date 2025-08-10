@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem, Package, PaginatedResponse, Service, SharedData } from '@/types';
+import { BreadcrumbItem, DialogProps, Package, PaginatedResponse, Service, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,11 +55,11 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Dashboard',
         href: '/dashboard'
     },{
-        title: 'Master Data',
+        title: 'Studio',
     },
     {
         title: 'Paket Foto',
-        href: 'master-data/package'
+        href: 'studio/packages'
     }
 ];
 
@@ -70,12 +70,6 @@ type PackageForm = {
     description: string;
 }
 
-type Dialog = {
-    id: string | null,
-    status: boolean,
-    dialogType: string
-}
-
 type Props = {
     packages: PaginatedResponse<Package>;
     services: Service[];
@@ -83,7 +77,7 @@ type Props = {
 
 const PackagePage = ({ services, packages } : Props) => {
     const { flash } = usePage<SharedData>().props;
-    const [open, setOpen] = useState<Dialog>({
+    const [open, setOpen] = useState<DialogProps>({
         id: null,
         status: false,
         dialogType: ''
@@ -109,7 +103,7 @@ const PackagePage = ({ services, packages } : Props) => {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if(open.id){
-            put(`/master-data/package/${open.id}`,{
+            put(`/studio/packages/${open.id}`,{
                 preserveScroll: true,
                 onSuccess: () => {
                     reset('service_id', 'name', 'price', 'description');
@@ -121,7 +115,7 @@ const PackagePage = ({ services, packages } : Props) => {
                 },
             });
         }else{
-            post('/master-data/package', {
+            post('/studio/packages', {
                 preserveScroll: true,
                 onSuccess: () => {
                     reset('service_id', 'name', 'price', 'description');
@@ -154,7 +148,7 @@ const PackagePage = ({ services, packages } : Props) => {
     }
 
     const handleDelete = (id: string) => {
-        destroy(`/master-data/package/${id}`, {
+        destroy(`/studio/packages/${id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setOpen({

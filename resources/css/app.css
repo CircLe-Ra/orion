@@ -63,8 +63,9 @@
     --background: oklch(0.98 0.01 100);         /* Almost white with a touch of warmth */
     --foreground: oklch(0.2 0 0);               /* Dark gray for text */
 
-    --card: oklch(0.97 0.01 100);               /* Slightly off-white card */
+    /*--card: oklch(0.97 0.01 100);               !* Slightly off-white card *!*/
     --card-foreground: oklch(0.2 0 0);
+    --card: oklch(1 0 0);
 
     --popover: oklch(1 0 0);                    /* Pure white */
     --popover-foreground: oklch(0.2 0 0);
@@ -149,5 +150,23 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@theme inline {
+    --animate-meteor-effect: meteor 5s linear infinite;
+
+    @keyframes meteor {
+        0% {
+            transform: rotate(215deg) translateX(0);
+            opacity: 1;
+        }
+        70% {
+            opacity: 1;
+        }
+        100% {
+            transform: rotate(215deg) translateX(-500px);
+            opacity: 0;
+        }
     }
 }

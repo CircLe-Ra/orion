@@ -23,7 +23,7 @@ class ServiceController extends Controller
             $services = Service::paginate($show)->withQueryString();
         }
 
-        return Inertia::render('master-data/services/index',[
+        return Inertia::render('studio/services/index',[
             'services' => $services,
             'search' => $search,
             'show' => $show,

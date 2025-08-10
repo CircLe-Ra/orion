@@ -26,7 +26,7 @@ class PackageController extends Controller
         } else {
             $packages = Package::with('service')->paginate($show)->withQueryString();
         }
-        return Inertia::render('master-data/package/index', [
+        return Inertia::render('studio/package/index', [
             'services' => Service::all(),
             'packages' => $packages,
             'search' => $search,
@@ -56,12 +56,12 @@ class PackageController extends Controller
         ]);
         try {
             Package::create($validated);
-            return to_route('package.index')->with([
+            return to_route('packages.index')->with([
                 'status' => 'success',
                 'message' => 'Paket baru berhasil ditambahkan.'
             ]);
         }catch (\Exception $exception){
-            return to_route('package.index')->with([
+            return to_route('packages.index')->with([
                 'status' => 'error',
                 'message' => 'Error : '.$exception->getMessage()
             ]);
@@ -98,12 +98,12 @@ class PackageController extends Controller
         ]);
         try {
             $package->update($validated);
-            return to_route('package.index')->with([
+            return to_route('packages.index')->with([
                 'status' => 'success',
                 'message' => 'Paket berhasil diperbaharui.'
             ]);
         }catch (\Exception $exception){
-            return to_route('package.index')->with([
+            return to_route('packages.index')->with([
                 'status' => 'error',
                 'message' => 'Error : '.$exception->getMessage()
             ]);
@@ -117,12 +117,12 @@ class PackageController extends Controller
     {
         try {
             $package->delete();
-            return to_route('package.index')->with([
+            return to_route('packages.index')->with([
                 'status' => 'success',
                 'message' => 'Paket berhasil dihapus.'
             ]);
         }catch (\Exception $exception){
-            return to_route('package.index')->with([
+            return to_route('packages.index')->with([
                 'status' => 'error',
                 'message' => 'Error : '.$exception->getMessage()
             ]);

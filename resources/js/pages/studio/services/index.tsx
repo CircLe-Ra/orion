@@ -33,11 +33,11 @@ const breadcrumbs: BreadcrumbItem[] = [
         title: 'Dashboard',
         href: '/dashboard'
     },{
-        title: 'Master Data',
+        title: 'Studio',
     },
     {
         title: 'Layanan Studio',
-        href: 'master-data/services'
+        href: 'studio/services'
     }
 ];
 
@@ -74,7 +74,7 @@ const ServicePage = ({ services }: Props) => {
     const submit = (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         if (selectedItem){
-            put('/master-data/services/' + selectedItem, {
+            put('/studio/services/' + selectedItem, {
                 preserveScroll: true,
                 onSuccess: () => {
                     setData('name', '');
@@ -82,7 +82,7 @@ const ServicePage = ({ services }: Props) => {
                 }
             });
         }else{
-            post('/master-data/services', {
+            post('/studio/services', {
                 preserveScroll: true,
                 onSuccess: () => {
                     setData('name', '');
@@ -99,7 +99,7 @@ const ServicePage = ({ services }: Props) => {
     }
 
     const handleDelete = (id: string) => {
-        destroy(`/master-data/services/${id}`, {
+        destroy(`/studio/services/${id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setOpen({
