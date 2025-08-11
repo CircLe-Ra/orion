@@ -24,24 +24,24 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('123'),
         ]);
 
-        $service = Service::factory()->create([
-            'name' => 'Photobox'
-        ]);
-
-        $service1 = Service::factory()->create([
-            'name' => 'Selfphoto'
-        ]);
-
-        $serviceId = [$service, $service1];
-
-        foreach (range(1, 10) as $index) {
-            Package::factory()->create([
-                'service_id' => $serviceId[array_rand($serviceId)],
-                'name' => 'Paket '.$index,
-                'price' => random_int(150000, 1000000),
-                'description' => 'Paket Foto '. $index
-            ]);
-        }
+//        $service = Service::factory()->create([
+//            'name' => 'Photobox'
+//        ]);
+//
+//        $service1 = Service::factory()->create([
+//            'name' => 'Selfphoto'
+//        ]);
+//
+//        $serviceId = [$service, $service1];
+//
+//        foreach (range(1, 10) as $index) {
+//            Package::factory()->create([
+//                'service_id' => $serviceId[array_rand($serviceId)],
+//                'name' => 'Paket '.$index,
+//                'price' => random_int(150000, 1000000),
+//                'description' => 'Paket Foto '. $index
+//            ]);
+//        }
 
     }
 }

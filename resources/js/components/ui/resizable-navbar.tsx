@@ -8,6 +8,7 @@ import {
 } from "motion/react";
 
 import React, { useRef, useState } from "react";
+import { Link } from '@inertiajs/react';
 
 
 interface NavbarProps {
@@ -275,12 +276,25 @@ export const NavbarButton = ({
   };
 
   return (
-    <Tag
-      href={href || undefined}
-      className={cn(baseStyles, variantStyles[variant], className)}
-      {...props}
-    >
-      {children}
-    </Tag>
+      <>
+          { href ? (
+                  <Link
+                      href={href}
+                      className={cn(baseStyles, variantStyles[variant], className)}
+                      {...props}
+                  >
+                      {children}
+                  </Link>
+              ) : (
+              <Tag
+                  href={href}
+                  className={cn(baseStyles, variantStyles[variant], className)}
+                  {...props}
+              >
+                  {children}
+              </Tag>
+            )
+          }
+      </>
   );
 };

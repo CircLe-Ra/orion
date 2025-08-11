@@ -3,7 +3,6 @@ import { Meteors } from '@/components/ui/meteors';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/moving-border';
 import { SkeletonTwo } from '@/components/feature-section';
-import { cn } from '@/lib/utils';
 import { FocusCards } from '@/components/ui/focus-cards';
 
 const cards = [
@@ -84,7 +83,8 @@ const LandingPage = () => {
                         <SkeletonTwo />
                     </div>
                 </section>
-                <section className={"mb-20"}>
+
+                <section className={"pb-20"}>
                     <div className={"max-w-7xl mx-auto px-4 flex justify-center flex-col items-center"}>
                         <h1 className={"text-3xl font-bold"}>Fotografi untuk Setiap Pencapaian Hidup Anda</h1>
                         <p className={"mb-8 mt-2"}>Ambil inspirasi dari galeri kami untuk menciptakan momen indah milik Anda sendiri!</p>

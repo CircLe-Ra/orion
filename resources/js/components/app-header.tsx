@@ -31,15 +31,15 @@ export function AppHeader({ children }: PropsWithChildren) {
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     return (
-        <div>
+        <div >
             <div className="relative w-full max-w-7xl mx-auto">
                 <Navbar >
                     <NavBody>
                         <NavbarLogo />
                         <NavItems items={navItems} />
                         <div className="flex items-center gap-4">
-                            <NavbarButton variant="secondary">Masuk</NavbarButton>
-                            <NavbarButton variant="primary">Daftar</NavbarButton>
+                            <NavbarButton variant="secondary" href={'/login'}>Masuk</NavbarButton>
+                            <NavbarButton variant="primary" href={'/register'}>Daftar</NavbarButton>
                         </div>
                     </NavBody>
 
