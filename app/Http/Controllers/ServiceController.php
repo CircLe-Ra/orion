@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ServiceController extends Controller
@@ -46,9 +47,23 @@ class ServiceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
+            'description' => 'required|string',
+            'image' => 'required|string',
         ]);
 
         try {
+            $imagePath = null;
+            if ($request->filled('image')) {
+                $tempPath = $request->input('image');
+                if (Storage::disk('public')->exists($tempPath)) {
+                    $finalPath = str_replace('temp/', 'uploads/', $tempPath);
+                    Storage::disk('public')->move($tempPath, $finalPath);
+                    $imagePath = $finalPath;
+                }
+            }
+
+            $validated['image'] = $imagePath;
+
             Service::create($validated);
             return to_route('services.index')->with([
                 'status' => 'success',
@@ -85,9 +100,26 @@ class ServiceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
+            'description' => 'required|string',
+            'image' => 'nullable|string',
         ]);
 
         try {
+            $imagePath = null;
+            if ($request->filled('image')) {
+                $tempPath = $request->input('image');
+                if($tempPath !== $service->image){
+                    if (Storage::disk('public')->exists($tempPath)) {
+                        $finalPath = str_replace('temp/', 'uploads/', $tempPath);
+                        Storage::disk('public')->move($tempPath, $finalPath);
+                        $imagePath = $finalPath;
+                        $service->image && Storage::disk('public')->delete($service->image);
+                    }
+                    $validated['image'] = $imagePath;
+                }
+            }
+
+
             $service->update($validated);
             return to_route('services.index')->with([
                 'status' => 'success',

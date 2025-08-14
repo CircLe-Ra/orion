@@ -90,7 +90,10 @@ export interface NamedEntity {
     name: string;
 }
 
-export type Service = NamedEntity;
+export interface Service extends NamedEntity {
+    description: string;
+    image: string;
+}
 
 export interface Package extends NamedEntity {
     price: number;

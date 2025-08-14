@@ -11,7 +11,7 @@ class Service extends Model
 {
     /** @use HasFactory<\Database\Factories\ServiceFactory> */
     use HasFactory, HasUuids;
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'description', 'image'];
 
     public function packages(): HasMany
     {

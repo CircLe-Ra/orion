@@ -3,12 +3,12 @@ import { BreadcrumbItem, PaginatedResponse, Service, SharedData } from '@/types'
 import { Head, useForm, usePage } from '@inertiajs/react';
 import Heading from '@/components/heading';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import { MouseEvent, useEffect, useState } from 'react';
+import { MouseEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
     DropdownMenu,
@@ -16,7 +16,7 @@ import {
     DropdownMenuLabel, DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { ChevronRight, Loader2Icon, Settings, Trash2 } from 'lucide-react';
+import { EllipsisVertical, Loader2Icon, Settings, Trash2 } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -27,6 +27,16 @@ import {
     AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import TableData from '@/components/table-data';
+import { Textarea } from '@/components/ui/textarea';
+import { FilePond, registerPlugin } from 'react-filepond';
+import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
+import 'filepond/dist/filepond.min.css';
+import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
+import { limitString } from '@/lib/utils';
+import { FilePondFile } from 'filepond';
+
+registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -43,6 +53,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 type ServiceForm = {
     name: string;
+    description: string;
+    image: string;
 }
 
 type Props = {
@@ -51,7 +63,9 @@ type Props = {
 
 const ServicePage = ({ services }: Props) => {
     const { flash } = usePage<SharedData>().props;
+    const pondRef = useRef<FilePond | null>(null);
     const [selectedItem, setSelectedItem] = useState<string | null>(null);
+    const [existingImage, setExistingImage] = useState<string | null>(null);
     const [open, setOpen] = useState<{ id: string | null; status: boolean }>({
         id: null,
         status: false,
@@ -66,9 +80,10 @@ const ServicePage = ({ services }: Props) => {
         }
     }, [flash.status, flash.message]);
 
-
     const { data, setData, post, put, delete: destroy, processing, errors } = useForm<Required<ServiceForm>>({
-        name: ''
+        name: '',
+        description: '',
+        image: ''
     });
 
     const submit = (e: MouseEvent<HTMLButtonElement>) => {
@@ -78,7 +93,13 @@ const ServicePage = ({ services }: Props) => {
                 preserveScroll: true,
                 onSuccess: () => {
                     setData('name', '');
+                    setData('description', '');
+                    setData('image', '');
+                    if (pondRef.current) {
+                        pondRef.current.removeFiles();
+                    }
                     setSelectedItem(null);
+                    setExistingImage(null);
                 }
             });
         }else{
@@ -86,6 +107,11 @@ const ServicePage = ({ services }: Props) => {
                 preserveScroll: true,
                 onSuccess: () => {
                     setData('name', '');
+                    setData('description', '');
+                    setData('image', '');
+                    if (pondRef.current) {
+                        pondRef.current.removeFiles();
+                    }
                 }
             });
         }
@@ -95,8 +121,22 @@ const ServicePage = ({ services }: Props) => {
         const service = services.data.find((item) => item.id === id);
         if(!service) return;
         setSelectedItem(id);
-        setData('name', service!.name);
-    }
+        setData('name', service.name);
+        setData('description', service.description);
+
+        if (service.image) {
+            setData('image', service.image);
+            setExistingImage(service.image);
+            if (pondRef.current) {
+                pondRef.current.removeFiles();
+                pondRef.current.addFile('/storage/' + service.image);
+            }
+
+        } else {
+            setData('image', '');
+        }
+    };
+
 
     const handleDelete = (id: string) => {
         destroy(`/studio/services/${id}`, {
@@ -121,7 +161,7 @@ const ServicePage = ({ services }: Props) => {
                             <CardTitle>Input Data Layanan</CardTitle>
                             <CardDescription>Isikan nama layanan pada kolom lalu simpan</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className={'grid gap-4'}>
                             <div className={'grid gap-2'}>
                                 <Label htmlFor="name">Nama Layanan</Label>
                                 <Input
@@ -135,6 +175,79 @@ const ServicePage = ({ services }: Props) => {
                                 />
                                 <InputError message={errors.name} />
                             </div>
+                            <div className={'grid gap-2'}>
+                                <Label htmlFor="description">Deskripsi</Label>
+                                <Textarea id="description" tabIndex={1} value={data.description} onChange={(e) => setData('description', e.target.value)} required>
+                                    {data.description}
+                                </Textarea>
+
+                                <InputError message={errors.description} />
+                            </div>
+                            <div className={'grid gap-2'}>
+                                <Label htmlFor="image">Gambar</Label>
+                                <FilePond
+                                    ref={pondRef}
+                                    allowMultiple={false}
+                                    maxFiles={1}
+                                    {...(selectedItem && existingImage
+                                        ? {
+                                            files: [
+                                                {
+                                                    source: existingImage,
+                                                    options: { type: 'local' },
+                                                },
+                                            ],
+                                        }
+                                        : {})}
+                                    server={{
+                                        process: {
+                                            url: '/uploads',
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN':
+                                                    (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+                                                        ?.content || '',
+                                            },
+                                            onload: (response) => {
+                                                const res = JSON.parse(response);
+                                                setData('image', res.filepath);
+                                                if (selectedItem) {
+                                                    setExistingImage('');
+                                                }
+                                                return res.filepath; // ini jadi uniqueFileId untuk revert
+                                            },
+                                        },
+                                        revert: (uniqueFileId, load, error) => {
+                                            fetch(`/reverts`, {
+                                                method: 'DELETE',
+                                                headers: {
+                                                    'X-CSRF-TOKEN':
+                                                        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+                                                            ?.content || '',
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({ filepath: uniqueFileId }),
+                                            })
+                                                .then(() => load())
+                                                .catch(() => error('Gagal menghapus file'));
+                                        },
+                                        load: (source, load, error, progress, abort) => {
+                                            fetch(`/storage/${source}`)
+                                                .then((res) => res.blob())
+                                                .then((blob) => load(blob))
+                                                .catch(() => {
+                                                    error('Gagal memuat gambar');
+                                                    abort();
+                                                });
+                                        },
+                                    }}
+                                    name="files"
+                                    labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
+                                />
+
+
+                                <InputError message={errors.image} />
+                            </div>
                         </CardContent>
                         <CardFooter className={'flex justify-end gap-2'}>
                             <Button
@@ -142,7 +255,10 @@ const ServicePage = ({ services }: Props) => {
                                 variant={'secondary'}
                                 onClick={() => {
                                     setSelectedItem(null);
+                                    setExistingImage(null);
                                     setData('name', '');
+                                    setData('description', '');
+                                    setData('image', '');
                                 }}>
                             Batal
                             </Button>
@@ -158,18 +274,21 @@ const ServicePage = ({ services }: Props) => {
                             <CardDescription>Data layanan yang telah diinputkan</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <TableData links={services.links} tHead={['Nama Layanan', 'Aksi']}>
+                            <TableData links={services.links} tHead={['Gambar', 'Nama Layanan', 'Deskripsi', 'Aksi']}>
                                 {services.data.length > 0
                                     ? services.data.map((service, index) => (
                                         <TableRow key={service.id}>
                                             <TableCell>{index + 1}</TableCell>
+                                            <TableCell>
+                                                <img src={'/storage/' + service.image} alt={service.name} className={'w-16 h-16 rounded-full object-cover'} />
+                                            </TableCell>
                                             <TableCell>{service.name}</TableCell>
+                                            <TableCell>{limitString(service.description, 50)}</TableCell>
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant={'outline'} size={'sm'} className={'cursor-pointer'}>
-                                                            Menu
-                                                            <ChevronRight />
+                                                        <Button variant={'ghost'} size={'sm'} className={'cursor-pointer'}>
+                                                            <EllipsisVertical className={'h-4 w-4'} />
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent side={'right'}>
