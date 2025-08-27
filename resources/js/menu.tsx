@@ -1,5 +1,5 @@
 import { NavItem } from '@/types';
-import { BookOpen, Camera, Database, Folder, Layers, LayoutGrid } from 'lucide-react';
+import { BookOpen, Camera, Database, Folder, LayoutGrid } from 'lucide-react';
 
 export const mainNavItems: NavItem[] = [
     {
@@ -28,6 +28,14 @@ export const mainNavItems: NavItem[] = [
         icon: Camera,
         subMenu: [
             {
+                title: 'Galeri',
+                href: '/studio/galleries'
+            },
+            {
+                title: 'Jadwal',
+                href: '/studio/schedules'
+            },
+            {
                 title: 'Layanan Studio',
                 href: '/studio/services',
             },
@@ -35,10 +43,6 @@ export const mainNavItems: NavItem[] = [
                 title: 'Paket Foto',
                 href: '/studio/packages'
             },
-            {
-                title: 'Galeri',
-                href: '/studio/galleries'
-            }
         ],
     }
 ];

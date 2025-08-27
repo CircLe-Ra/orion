@@ -34,7 +34,6 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 import { limitString } from '@/lib/utils';
-import { FilePondFile } from 'filepond';
 
 registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
@@ -214,7 +213,7 @@ const ServicePage = ({ services }: Props) => {
                                                 if (selectedItem) {
                                                     setExistingImage('');
                                                 }
-                                                return res.filepath; // ini jadi uniqueFileId untuk revert
+                                                return res.filepath;
                                             },
                                         },
                                         revert: (uniqueFileId, load, error) => {
@@ -313,7 +312,7 @@ const ServicePage = ({ services }: Props) => {
                                     ))
                                     : (
                                         <TableRow>
-                                            <TableCell colSpan={4} className={'text-center'}>Tidak ada data</TableCell>
+                                            <TableCell colSpan={5} className={'text-center'}>Tidak ada data</TableCell>
                                         </TableRow>
                                     )}
                             </TableData>

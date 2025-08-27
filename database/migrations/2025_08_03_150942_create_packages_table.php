@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('price');
             $table->text('description');
             $table->text('terms_conditions');
+            $table->text('image');
             $table->timestamps();
         });
     }
