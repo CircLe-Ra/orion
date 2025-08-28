@@ -16,7 +16,7 @@ import {
     DialogHeader,
     DialogTitle
 } from '@/components/ui/dialog';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Loader2Icon, PlusCircle, Settings, Trash2 } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { currency, limitString } from '@/lib/utils';
@@ -48,6 +48,13 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import TableData from '@/components/table-data';
+import { FilePond, registerPlugin } from 'react-filepond';
+import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
+import 'filepond/dist/filepond.min.css';
+import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
+
+registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -68,6 +75,8 @@ type PackageForm = {
     name: string;
     price: number;
     description: string;
+    terms_conditions: string;
+    image: string;
 }
 
 type Props = {
@@ -77,6 +86,9 @@ type Props = {
 
 const PackagePage = ({ services, packages } : Props) => {
     const { flash } = usePage<SharedData>().props;
+    const pondRef = useRef<FilePond | null>(null);
+    const [selectedItem, setSelectedItem] = useState<string | null>(null);
+    const [existingImage, setExistingImage] = useState<string | null>(null);
     const [open, setOpen] = useState<DialogProps>({
         id: null,
         status: false,
@@ -97,7 +109,9 @@ const PackagePage = ({ services, packages } : Props) => {
         service_id: '',
         name: '',
         price: 0,
-        description: ''
+        description: '',
+        terms_conditions:  '',
+        image: ''
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -106,24 +120,28 @@ const PackagePage = ({ services, packages } : Props) => {
             put(`/studio/packages/${open.id}`,{
                 preserveScroll: true,
                 onSuccess: () => {
-                    reset('service_id', 'name', 'price', 'description');
+                    reset('service_id', 'name', 'price', 'description', 'terms_conditions');
                     setOpen(() => ({
                         id: null,
                         status: false,
                         dialogType: ''
                     }));
+                    setSelectedItem(null);
+                    setExistingImage(null);
                 },
             });
         }else{
             post('/studio/packages', {
                 preserveScroll: true,
                 onSuccess: () => {
-                    reset('service_id', 'name', 'price', 'description');
+                    reset('service_id', 'name', 'price', 'description', 'terms_conditions');
                     setOpen(() => ({
                         id: null,
                         status: false,
                         dialogType: ''
                     }));
+                    setSelectedItem(null);
+                    setExistingImage(null);
                 },
             });
         }
@@ -132,6 +150,7 @@ const PackagePage = ({ services, packages } : Props) => {
     const handleUpdate = (id: string) => {
         const pkg = packages.data.find((item) => item.id === id);
         if(!pkg) return;
+        setSelectedItem(id);
         setData('service_id', pkg!.service_id.toString());
         setData('name', pkg!.name);
         setData('price', pkg!.price);
@@ -145,6 +164,18 @@ const PackagePage = ({ services, packages } : Props) => {
                 dialogType: 'dialog'
             }
         ))
+
+        if (pkg.image) {
+            setData('image', pkg.image);
+            setExistingImage(pkg.image);
+            if (pondRef.current) {
+                pondRef.current.removeFiles();
+                pondRef.current.addFile('/storage/' + pkg.image);
+            }
+
+        } else {
+            setData('image', '');
+        }
     }
 
     const handleDelete = (id: string) => {
@@ -183,7 +214,7 @@ const PackagePage = ({ services, packages } : Props) => {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <TableData links={packages.links} tHead={['Nama Layanan', 'Nama Paket', 'Harga', 'Deskripsi', 'Aksi']}>
+                            <TableData links={packages.links} tHead={['Gambar','Nama Layanan', 'Nama Paket', 'Harga', 'Deskripsi', 'Aksi']}>
                                 {packages.data.length > 0 ? (
                                     packages.data.map((item, index) => (
                                         <TableRow key={item.id}>
@@ -223,7 +254,7 @@ const PackagePage = ({ services, packages } : Props) => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} className={'text-center'}>Tidak ada data</TableCell>
+                                        <TableCell colSpan={7} className={'text-center'}>Tidak ada data</TableCell>
                                     </TableRow>
                                 ) }
                             </TableData>
@@ -246,32 +277,34 @@ const PackagePage = ({ services, packages } : Props) => {
                     </DialogHeader>
                     <form onSubmit={handleSubmit}>
                         <div className="grid gap-4 mb-6">
-                            <div className="grid gap-3">
-                                <Label htmlFor="service">Layanan Foto</Label>
-                                <Select onValueChange={(value) => setData('service_id', value)}
-                                        defaultValue={data.service_id}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Pilih?" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Layanan</SelectLabel>
-                                            {services.map((item) => (
-                                                <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={errors.service_id} />
+                            <div className='flex justify-between gap-2'>
+                                <div className="grid gap-3 w-full">
+                                    <Label htmlFor="service">Layanan Foto</Label>
+                                    <Select onValueChange={(value) => setData('service_id', value)}
+                                            defaultValue={data.service_id}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Pilih?" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectLabel>Layanan</SelectLabel>
+                                                {services.map((item) => (
+                                                    <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.service_id} />
+                                </div>
+                                <div className="grid gap-3 w-full">
+                                    <Label htmlFor="name">Nama</Label>
+                                    <Input id="name" name="name" value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)} />
+                                    <InputError message={errors.name} />
+                                </div>
                             </div>
                             <div className="grid gap-3">
-                                <Label htmlFor="name">Nama Paket</Label>
-                                <Input id="name" name="name" value={data.name}
-                                       onChange={(e) => setData('name', e.target.value)} />
-                                <InputError message={errors.name} />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="price">Harga Paket</Label>
+                                <Label htmlFor="price">Harga</Label>
                                 <Input id="price"
                                        name="price"
                                        placeholder={currency(data.price.toString())}
@@ -284,16 +317,96 @@ const PackagePage = ({ services, packages } : Props) => {
                                        }}
                                 />
                             </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="desc">Deskripsi Paket</Label>
-                                <Textarea
-                                    placeholder="Masukan deskripsi paket..."
-                                    id="desc"
-                                    name={'description'}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                >
-                                    {data.description}
-                                </Textarea>
+                            <div className='flex justify-between gap-2'>
+                                <div className="grid gap-3 w-full">
+                                    <Label htmlFor="desc">Deskripsi</Label>
+                                    <Textarea
+                                        placeholder="Masukan deskripsi paket..."
+                                        cols={6}
+                                        id="desc"
+                                        name={'description'}
+                                        onChange={(e) => setData('description', e.target.value)}
+                                    >
+                                        {data.description}
+                                    </Textarea>
+                                </div>
+                                
+                                <div className="grid gap-3 w-full">
+                                    <Label htmlFor="terms_conditions">Syarat & Ketentuan</Label>
+                                    <Textarea
+                                        placeholder="Masukan syarat & ketentuan paket..."
+                                        id="terms_conditions"
+                                        name={'terms_conditions'}
+                                        onChange={(e) => setData('terms_conditions', e.target.value)}
+                                    >
+                                        {data.terms_conditions}
+                                    </Textarea>
+                                </div>
+                            </div>
+                             <div className={'grid gap-2'}>
+                                <Label htmlFor="image">Gambar</Label>
+                                <FilePond
+                                    ref={pondRef}
+                                    allowMultiple={false}
+                                    maxFiles={1}
+                                    {...(selectedItem && existingImage
+                                        ? {
+                                            files: [
+                                                {
+                                                    source: existingImage,
+                                                    options: { type: 'local' },
+                                                },
+                                            ],
+                                        }
+                                        : {})}
+                                    server={{
+                                        process: {
+                                            url: '/uploads',
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN':
+                                                    (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+                                                        ?.content || '',
+                                            },
+                                            onload: (response) => {
+                                                const res = JSON.parse(response);
+                                                setData('image', res.filepath);
+                                                if (selectedItem) {
+                                                    setExistingImage('');
+                                                }
+                                                return res.filepath;
+                                            },
+                                        },
+                                        revert: (uniqueFileId, load, error) => {
+                                            fetch(`/reverts`, {
+                                                method: 'DELETE',
+                                                headers: {
+                                                    'X-CSRF-TOKEN':
+                                                        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)
+                                                            ?.content || '',
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({ filepath: uniqueFileId }),
+                                            })
+                                                .then(() => load())
+                                                .catch(() => error('Gagal menghapus file'));
+                                        },
+                                        load: (source, load, error, progress, abort) => {
+                                            fetch(`/storage/${source}`)
+                                                .then((res) => res.blob())
+                                                .then((blob) => load(blob))
+                                                .catch(() => {
+                                                    error('Gagal memuat gambar');
+                                                    abort();
+                                                });
+                                        },
+                                    }}
+                                    name="files"
+                                    labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
+                                />
+
+
+                                <InputError message={errors.image} />
                             </div>
                         </div>
                         <DialogFooter>
@@ -305,7 +418,7 @@ const PackagePage = ({ services, packages } : Props) => {
                                             dialogType: ''
                                         })
                                     );
-                                    reset('service_id', 'name', 'price', 'description');
+                                    reset('service_id', 'name', 'price', 'description', 'terms_conditions');
                                     setDisplayPrice('');
                                 }}>Tutup</Button>
                             </DialogClose>

@@ -111,6 +111,8 @@ const ServicePage = ({ services }: Props) => {
                     if (pondRef.current) {
                         pondRef.current.removeFiles();
                     }
+                    setSelectedItem(null);
+                    setExistingImage(null);
                 }
             });
         }

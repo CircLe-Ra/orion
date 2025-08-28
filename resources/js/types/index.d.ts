@@ -98,6 +98,8 @@ export interface Service extends NamedEntity {
 export interface Package extends NamedEntity {
     price: number;
     description: string;
+    terms_conditions: string;
+    image: string;
     service_id: string;
     service?: Service;
 }
