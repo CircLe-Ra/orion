@@ -52,6 +52,8 @@ class PackageController extends Controller
             'service_id' => 'required|exists:services,id',
             'name' => 'required|string',
             'price' => 'required|numeric',
+            'image' => 'required|string',
+            'terms_conditions' => 'required|string',
             'description' => 'required|string',
         ]);
         try {
@@ -94,6 +96,8 @@ class PackageController extends Controller
             'service_id' => 'required|exists:services,id',
             'name' => 'required|string',
             'price' => 'required|numeric',
+            'image' => 'required|string',
+            'terms_conditions' => 'required|string',
             'description' => 'required|string',
         ]);
         try {

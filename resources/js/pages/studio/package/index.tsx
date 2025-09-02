@@ -120,12 +120,13 @@ const PackagePage = ({ services, packages } : Props) => {
             put(`/studio/packages/${open.id}`,{
                 preserveScroll: true,
                 onSuccess: () => {
-                    reset('service_id', 'name', 'price', 'description', 'terms_conditions');
+                    reset('service_id', 'name', 'price', 'description', 'terms_conditions', 'image');
                     setOpen(() => ({
                         id: null,
                         status: false,
                         dialogType: ''
                     }));
+                    setDisplayPrice('');
                     setSelectedItem(null);
                     setExistingImage(null);
                 },
@@ -134,12 +135,13 @@ const PackagePage = ({ services, packages } : Props) => {
             post('/studio/packages', {
                 preserveScroll: true,
                 onSuccess: () => {
-                    reset('service_id', 'name', 'price', 'description', 'terms_conditions');
+                    reset('service_id', 'name', 'price', 'description', 'terms_conditions', 'image');
                     setOpen(() => ({
                         id: null,
                         status: false,
                         dialogType: ''
                     }));
+                    setDisplayPrice('');
                     setSelectedItem(null);
                     setExistingImage(null);
                 },
@@ -154,6 +156,7 @@ const PackagePage = ({ services, packages } : Props) => {
         setData('service_id', pkg!.service_id.toString());
         setData('name', pkg!.name);
         setData('price', pkg!.price);
+        setData('terms_conditions', pkg!.terms_conditions);
         setData('description', pkg!.description);
         setDisplayPrice(currency(pkg!.price.toString()));
         setOpen((prev) => (
@@ -214,15 +217,19 @@ const PackagePage = ({ services, packages } : Props) => {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <TableData links={packages.links} tHead={['Gambar','Nama Layanan', 'Nama Paket', 'Harga', 'Deskripsi', 'Aksi']}>
+                            <TableData links={packages.links} tHead={['Gambar','Nama Layanan', 'Nama Paket', 'Harga', 'Deskripsi', 'Syarat & Ketentuan', 'Aksi']}>
                                 {packages.data.length > 0 ? (
                                     packages.data.map((item, index) => (
                                         <TableRow key={item.id}>
                                             <TableCell>{index + 1}</TableCell>
+                                            <TableCell>
+                                                <img src={'/storage/' + item.image} alt={item.name} className={'w-16 h-16 rounded-full object-cover'} />
+                                            </TableCell>
                                             <TableCell>{item.service?.name}</TableCell>
                                             <TableCell>{item.name}</TableCell>
                                             <TableCell>{currency(item.price.toString())}</TableCell>
                                             <TableCell>{limitString(item.description, 30)}</TableCell>
+                                            <TableCell>{limitString(item.terms_conditions, 30)}</TableCell>
                                             <TableCell>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -268,7 +275,7 @@ const PackagePage = ({ services, packages } : Props) => {
                     status: isOpen
                 }))
             )}>
-                <DialogContent className="sm:max-w-[425px]" showCloseButton={false}>
+                <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto w-full" showCloseButton={false}>
                     <DialogHeader>
                         <DialogTitle>{open.id ? 'Perbarui Data' : 'Tambah Data'}</DialogTitle>
                         <DialogDescription>
@@ -317,33 +324,7 @@ const PackagePage = ({ services, packages } : Props) => {
                                        }}
                                 />
                             </div>
-                            <div className='flex justify-between gap-2'>
-                                <div className="grid gap-3 w-full">
-                                    <Label htmlFor="desc">Deskripsi</Label>
-                                    <Textarea
-                                        placeholder="Masukan deskripsi paket..."
-                                        cols={6}
-                                        id="desc"
-                                        name={'description'}
-                                        onChange={(e) => setData('description', e.target.value)}
-                                    >
-                                        {data.description}
-                                    </Textarea>
-                                </div>
-                                
-                                <div className="grid gap-3 w-full">
-                                    <Label htmlFor="terms_conditions">Syarat & Ketentuan</Label>
-                                    <Textarea
-                                        placeholder="Masukan syarat & ketentuan paket..."
-                                        id="terms_conditions"
-                                        name={'terms_conditions'}
-                                        onChange={(e) => setData('terms_conditions', e.target.value)}
-                                    >
-                                        {data.terms_conditions}
-                                    </Textarea>
-                                </div>
-                            </div>
-                             <div className={'grid gap-2'}>
+                            <div className={'grid gap-2'}>
                                 <Label htmlFor="image">Gambar</Label>
                                 <FilePond
                                     ref={pondRef}
@@ -408,6 +389,30 @@ const PackagePage = ({ services, packages } : Props) => {
 
                                 <InputError message={errors.image} />
                             </div>
+                            <div className="grid gap-3 w-full">
+                                <Label htmlFor="desc">Deskripsi</Label>
+                                <Textarea
+                                    placeholder="Masukan deskripsi paket..."
+                                    cols={6}
+                                    id="desc"
+                                    name={'description'}
+                                    onChange={(e) => setData('description', e.target.value)}
+                                >
+                                    {data.description}
+                                </Textarea>
+                            </div>
+
+                            <div className="grid gap-3 w-full">
+                                <Label htmlFor="terms_conditions">Syarat & Ketentuan</Label>
+                                <Textarea
+                                    placeholder="Masukan syarat & ketentuan paket..."
+                                    id="terms_conditions"
+                                    name={'terms_conditions'}
+                                    onChange={(e) => setData('terms_conditions', e.target.value)}
+                                >
+                                    {data.terms_conditions}
+                                </Textarea>
+                            </div>
                         </div>
                         <DialogFooter>
                             <DialogClose asChild>
@@ -418,8 +423,10 @@ const PackagePage = ({ services, packages } : Props) => {
                                             dialogType: ''
                                         })
                                     );
-                                    reset('service_id', 'name', 'price', 'description', 'terms_conditions');
+                                    reset('service_id', 'name', 'price', 'description', 'terms_conditions', 'image');
                                     setDisplayPrice('');
+                                    setSelectedItem(null);
+                                    setExistingImage(null);
                                 }}>Tutup</Button>
                             </DialogClose>
                             <Button type="submit" disabled={processing} className={'cursor-pointer w-20'}>
